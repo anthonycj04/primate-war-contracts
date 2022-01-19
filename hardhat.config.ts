@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 
-import { HardhatUserConfig, task } from "hardhat/config";
+import { HardhatUserConfig, task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
@@ -19,6 +19,30 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+task("deploy_primate_weapon", "deploy PrimateWeapon")
+  .addPositionalParam("token", "token", undefined, types.string, false)
+  .addPositionalParam("symbol", "symbol", undefined, types.string, false)
+  .setAction(async ({ token, symbol }, hre) => {
+    const PrimateWeapon = await hre.ethers.getContractFactory("PrimateWeapon");
+    const w = await PrimateWeapon.deploy(token, symbol, {
+      maxFeePerGas: hre.ethers.utils.parseUnits("2", "gwei"),
+      maxPriorityFeePerGas: hre.ethers.utils.parseUnits("1", "gwei"),
+    });
+    console.log(`PrimateWeapon deployed at ${w.address}`);
+  });
+
+task("verify_primate_weapon", "verify PrimateWeapon")
+  .addPositionalParam("address", "address", undefined, types.string, false)
+  .addPositionalParam("token", "token", undefined, types.string, false)
+  .addPositionalParam("symbol", "symbol", undefined, types.string, false)
+  .setAction(async ({ address, token, symbol }, hre) => {
+    await hre.run("verify:verify", {
+      address: address,
+      constructorArguments: [token, symbol],
+      contract: "contracts/PrimateWeapon.sol:PrimateWeapon",
+    });
+  });
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -27,6 +51,11 @@ const config: HardhatUserConfig = {
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    rinkeby: {
+      url: process.env.RINKEBY_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
