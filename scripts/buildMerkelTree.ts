@@ -5,6 +5,7 @@ import { MerkleTree } from "merkletreejs";
 // doesn't work with merkletreejs if imported from ethers/lib/utils
 import keccak256 from "keccak256";
 import { solidityKeccak256, getAddress } from "ethers/lib/utils";
+import { join } from "path";
 
 interface ClaimEntry {
   amount: string;
@@ -70,6 +71,12 @@ async function main() {
       claims: Object.fromEntries(claims),
     })
   );
+  for (const [addr, claim] of claims) {
+    writeFileSync(
+      join("claims", `${addr.toLowerCase()}.json`),
+      JSON.stringify({ amount: claim.amount, proof: claim.proof })
+    );
+  }
 }
 
 main().catch((error) => {
